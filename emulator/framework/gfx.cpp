@@ -50,7 +50,7 @@ void GFXOpenWindow(const char *title,int width,int height,int colour) {
 
 	beeper.setup();
 	mainWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, 					// Try to create a window
-							SDL_WINDOWPOS_UNDEFINED, width,height, SDL_WINDOW_SHOWN );
+						SDL_WINDOWPOS_UNDEFINED, width,height, SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS|SDL_WINDOW_SKIP_TASKBAR );
 	if (mainWindow == NULL) {
 		exit(printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() ));
 	}
