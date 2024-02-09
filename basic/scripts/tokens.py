@@ -114,7 +114,7 @@ class TokenSet(object):
 			SYS 	EXIT	, 		; 		: 		' 		)		READ 	
 			DATA 	ELSE	WHEN	DOWNTO 	POKE	DOKE 	LOCAL	CALL
 			# 		. 		LINE 	RECT 	MOVE 	PLOT 	ELLIPSE	TEXT 	
-			IMAGE 	SPRITE 	FROM 	[		] 		@ 		TILEDRAW
+			IMAGE 	SPRITE 	FROM 	[		] 		@ 		TILEDRAW REF
 			""")
 		#
 		#		Keyword tokens (minor)
@@ -125,7 +125,7 @@ class TokenSet(object):
 			CLS 	INK		FRAME	SOLID	BY 		WHO 	PALETTE DRAW	
 			HIDE 	FLIP 	SOUND 	SFX 	ANCHOR	GLOAD	DEFCHR  LEFT
 			RIGHT 	FORWARD	TURTLE 	SWEET 	TILEMAP PENUP   PENDOWN FAST
-			HOME 	LOCALE 	CURSOR
+			HOME 	LOCALE 	CURSOR 	RENUMBER DELETE EDITOR  MON     
 			""")
 		#
 		#		Keyword tokens (assembler)
@@ -145,7 +145,7 @@ class TokenSet(object):
 		#
 		self.add(0x2E0,"""
 			SIN( 	COS(	TAN(	ATAN(	 LOG(	  EXP( 	 VAL( 	STR$( 	
-			ISVAL( 	SQR( 	PAGE 	SPRITEX( SPRITEY( NOTES( HIMEM 	
+			ISVAL( 	SQR( 	PAGE 	SPRITEX( SPRITEY( NOTES( HIMEM 	VBLANKS(
 		""")
 		
 if __name__ == "__main__":

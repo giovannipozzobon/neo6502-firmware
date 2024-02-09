@@ -1,9 +1,9 @@
 ; ************************************************************************************************
 ; ************************************************************************************************
 ;
-;		Name:		stack.inc
-;		Purpose:	Stack Constants
-;		Created:	5th December 2023
+;		Name:		vblanks.asm
+;		Purpose:	Return vertical blanks count
+;		Created:	9th February 2024
 ;		Reviewed:   No
 ;		Author:		Paul Robson (paul@robsons.org.uk)
 ;
@@ -12,27 +12,23 @@
 
 ; ************************************************************************************************
 ;
-;								Marker IDs for stacked values
-;
-;
-;					Bits 7..4 ID Bits 0..3 allocate 2 x for stack space
-;
-;	$Fx is reserved.
+;										Return VBlank count
 ;
 ; ************************************************************************************************
 
-STK_REPEAT = $12 			
-STK_WHILE = $22
-STK_DO = $32
-STK_FOR = $47
-STK_CALL = $52
-STK_GOSUB = $62
+		.section code	
 
-STK_LOCALINFO = $0F
-STK_LOCALN = $01
-STK_LOCALS = $02
-STK_REFPARAM = $03
+EXPUnaryVBlanks: ;; [vblanks(]
+		jsr 	ERRCheckRParen 					; )
 
+		.DoSendMessage 							; get vblanks
+		.byte 	5,37
+		.DoWaitMessage
+		jmp 	EXPReturn32BitInteger		
+
+		.send code
+
+				
 ; ************************************************************************************************
 ;
 ;									Changes and Updates
@@ -43,3 +39,4 @@ STK_REFPARAM = $03
 ;		==== 			=====
 ;
 ; ************************************************************************************************
+

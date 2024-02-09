@@ -25,6 +25,7 @@ EXPUnaryTime: ;; [time(]
 		.byte 	1,1
 		.DoWaitMessage
 		
+EXPReturn32BitInteger:		
 		lda 	ControlParameters+0				; return as integer
 		sta 	XSNumber0,x
 		lda 	ControlParameters+1

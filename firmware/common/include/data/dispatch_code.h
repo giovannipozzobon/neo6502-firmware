@@ -54,6 +54,9 @@ switch (*DCOMMAND) {
 			case 7:
 				*DERROR = CONSetCursorPosition(DPARAMS[0],DPARAMS[1]);
 				break;
+			case 8:
+				KBDShowFunctionKeys();
+				break;
 		}
 		break;
 	case 3:
@@ -66,6 +69,53 @@ switch (*DCOMMAND) {
 				break;
 			case 3:
 				*DERROR = FIOWriteFile(DSPGetString(DCOMMAND,4),DSPGetInt16(DCOMMAND,6),DSPGetInt16(DCOMMAND,8));
+				break;
+			case 4:
+				*DERROR = FIOOpenFileHandle(DPARAMS[0],DSPGetString(DPARAMS,1),DPARAMS[3]);
+				break;
+			case 5:
+				*DERROR = FIOCloseFileHandle(DPARAMS[0]);
+				break;
+			case 6:
+				*DERROR = FIOSeekFileHandle(DPARAMS[0],DSPGetInt32(DPARAMS,1));
+				break;
+			case 7:
+				{
+				uint32_t pos;
+				*DERROR = FIOTellFileHandle(DPARAMS[0],&pos);
+				DSPSetInt32(DPARAMS,1,pos);
+				}
+				break;
+			case 8:
+				{
+				uint16_t size = DSPGetInt16(DPARAMS,3);
+				*DERROR = FIOReadFileHandle(DPARAMS[0],DSPGetInt16(DPARAMS,1),&size);
+				DSPSetInt16(DPARAMS,3,size);
+				}
+				break;
+			case 9:
+				{
+				uint16_t size = DSPGetInt16(DPARAMS,3);
+				*DERROR = FIOWriteFileHandle(DPARAMS[0],DSPGetInt16(DPARAMS,1),&size);
+				DSPSetInt16(DPARAMS,3,size);
+				}
+				break;
+			case 10:
+				{
+				uint32_t size;
+				*DERROR = FIOGetSizeFileHandle(DPARAMS[0],&size);
+				DSPSetInt32(DPARAMS,1,size);
+				}
+				break;
+			case 11:
+				{
+				*DERROR = FIOSetSizeFileHandle(DPARAMS[0],DSPGetInt32(DPARAMS,1));
+				}
+				break;
+			case 12:
+				{
+				*DERROR = FIORenameFile(DSPGetStdString(DPARAMS, 0), DSPGetStdString(DPARAMS, 1));
+				}
 				break;
 		}
 		break;
@@ -268,6 +318,9 @@ switch (*DCOMMAND) {
 				break;
 			case 36:
 				GFXGraphicsCommand(36,DCOMMAND);
+				break;
+			case 37:
+				*((uint32_t *)DPARAMS) = RNDGetFrameCount();
 				break;
 		}
 		break;

@@ -35,6 +35,7 @@ extern struct GraphicsMode gMode;
 
 void RNDSetPalette(uint8_t colour,uint8_t r,uint8_t g,uint8_t b); 				// Implementation specific.
 void RNDStartMode0(struct GraphicsMode *gMode);
+int  RNDGetFrameCount(void);
 
 void GFXSetMode(int Mode);
 void GFXDefaultPalette(void);
@@ -47,6 +48,7 @@ void GFXPlotPixel(struct GraphicsMode *gMode,int x,int y);
 void GFXPlotPixelChecked(struct GraphicsMode *gMode,int x,int y);
 void GFXEllipse(struct GraphicsMode *gMode,int x1,int y1,int x2,int y2,int useSolidFill);
 int GFXFindImage(int type,int id);
+uint8_t GFXGetDrawSize(void);
 
 #endif
 

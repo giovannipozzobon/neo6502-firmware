@@ -20,6 +20,8 @@ static uint8_t *gDraw; 														// Draw from here.
 static uint8_t *tilePtr; 													// Tile data from here.
 static uint8_t *tilePixels; 												// Tile pixel data.
 static uint16_t yTile; 														// Tracking tile draw position.
+static uint8_t tileSize;  													// Tile Size = 16 or 32
+static uint8_t tileShift;  													// Tile shift to divide (4 or 5)
 
 static void TMRRenderTileLine(uint8_t count);
 static void TMRenderTileLineStart(uint8_t count);	
@@ -45,11 +47,17 @@ void TMPSelectTileMap(uint8_t *data,uint16_t xOffset,uint16_t yOffset) {
 // ***************************************************************************************
 
 uint8_t TMPDrawTileMap(uint8_t *data) {
+
 	int xPos = xTilePos,yPos = yTilePos;
+
+	tileSize = 16;tileShift = 4;  											// Work out size and shift
+	if (GFXGetDrawSize() == 2) {
+		tileSize = 32;tileShift = 5;
+	}
 
 	if (mapData == NULL) return 1;  										// No map specified.
 	if (xPos < 0 ||  yPos < 0 ||  											// Invalid draw position.
-				xPos >= width * 16 || yPos >= height * 16) return 1;
+				xPos >= width * tileSize || yPos >= height * tileSize) return 1;
 
 	int16_t x1 = data[4]+(data[5] << 8);  									// Parameters.
 	int16_t y1 = data[6]+(data[7] << 8);
@@ -58,7 +66,8 @@ uint8_t TMPDrawTileMap(uint8_t *data) {
 
 	xWindow = (x1 < x2) ? x1 : x2;yWindow = (y1 < y2) ? y1 : y2; 			// Work out drawing window
 	wWindow = abs(x1-x2);hWindow = abs(y1-y2);
-	if (wWindow < 16) return 1;  											// Reject this special case.
+	if (wWindow < tileSize) return 1;  										// Reject this special case.
+
 
 	if (xWindow < 0) {  													// Adjust for off left
 		xPos += abs(xWindow);
@@ -74,7 +83,7 @@ uint8_t TMPDrawTileMap(uint8_t *data) {
 	if (xWindow < 0 || yWindow < 0) return 0;
 	if (xWindow >= gMode.xGSize || yWindow >= gMode.yGSize) return 0; 		// Entirely off 
 	if (xWindow + wWindow >= gMode.xGSize) wWindow = gMode.xGSize-xWindow; 	// Trim to top and bottom.
-	if (yWindow + hWindow >= gMode.yGSize) hWindow = gMode.yGSize-hWindow;
+	if (yWindow + hWindow >= gMode.yGSize) hWindow = gMode.yGSize-yWindow;
 
 	int x = xWindow;  														// Start position.
 	int y = yWindow;  														// Draw from top to bottom.
@@ -84,22 +93,22 @@ uint8_t TMPDrawTileMap(uint8_t *data) {
 	int xLeader,xBlock16,xTrailer;
 
 	int todo = wWindow;   													// Pixels horizontally
-	if (xPos+wWindow >= width * 16) todo = width*16-xPos;  					// Trim to right side
-	xLeader = (-xPos & 15);  												// Pixels to display to first whole tile.
-	xBlock16 = (todo - xLeader) / 16;   									// Number of whole tiles to display
-	xTrailer = todo - xLeader - xBlock16 * 16;  							// Pixels to display to edge.
+	if (xPos+wWindow >= width * tileSize) todo = width*tileSize-xPos;  		// Trim to right side
+	xLeader = (-xPos & (tileSize-1));  										// Pixels to display to first whole tile.
+	xBlock16 = (todo - xLeader) / tileSize; 								// Number of whole tiles to display
+	xTrailer = todo - xLeader - xBlock16 * tileSize;  						// Pixels to display to edge.
 
 	gDraw = gMode.graphicsMemory + x + yWindow * gMode.xGSize;				// Start drawing here.
 
 //	printf("TD:%d,%d %d,%d\n",xWindow,yWindow,wWindow,hWindow);	
 //	printf("%d %d %d\n",xLeader,xBlock16,xTrailer);	
 
-	while (lineCount > 0 && yTile < height * 16) {  						// Until complete or off tile map
-		tilePtr = mapData + 3 + (yTile >> 4) * width + (xPos >> 4);			// Tile data comes from here.
+	while (lineCount > 0 && yTile < height * tileSize) {  					// Until complete or off tile map
+		tilePtr = mapData + 3 + (yTile>>tileShift)*width+(xPos>>tileShift);	// Tile data comes from here.
 		uint8_t *gStart = gDraw;  											// Start of drawing.
-		if (y >= 0 && y <= gMode.yGSize) {
+		if (y >= 0 && y <= gMode.yGSize) {			
 			if (xLeader != 0) TMRenderTileLineStart(xLeader); 				// Do the first pixels.
-			for (int i = 0;i < xBlock16;i++) TMRRenderTileLine(16); 		// Render complete 16 pixel tiles.
+			for (int i = 0;i < xBlock16;i++) TMRRenderTileLine(tileSize); 	// Render complete 16 pixel tiles.
 			if (xTrailer != 0) TMRRenderTileLine(xTrailer); 				// Do the last pixels.
 			if (todo != wWindow) TMROutputBackground(wWindow-todo);			// Any following blanks
 		}
@@ -107,7 +116,7 @@ uint8_t TMPDrawTileMap(uint8_t *data) {
 		gDraw = gStart + gMode.xGSize;  									// Down on screen
 		yTile++; 															// Next tile position
 	}
-	while (lineCount-- > 0) {
+	while (lineCount-- > 0) {  												// Blank the bottom unused area to sprites only.
 		for (uint16_t i = 0;i < wWindow;i++) {
 			gDraw[i] &= 0xF0;
 		}
@@ -137,10 +146,11 @@ static uint8_t *TMPGetTileRowAddress(uint8_t tileID,uint8_t yOffset) {
 // ***************************************************************************************
 
 static void TMRRenderTileLine(uint8_t count) {
-	tilePixels = TMPGetTileRowAddress(*tilePtr,yTile & 15);  			// Tile Pixel data comes from here.
+	uint8_t yOffset = (tileSize == 32) ? yTile >> 1 : yTile;  			// Offset in tile.
+	tilePixels = TMPGetTileRowAddress(*tilePtr,yOffset & 15);  			// Tile Pixel data comes from here.
 
 	if (tilePixels == NULL) {   										// Transparent/Solid tile.
-		if (*tilePtr > 0xF0) {  										// Handle solid tile			
+		if (*tilePtr >= 0xF0) {  										// Handle solid tile			
 			uint8_t b = *tilePtr & 0x0F;  								// Colour
 			uint32_t b2 = b | (b << 8) | (b << 16) | (b << 24);  		// Colour in 32 bits
 			//
@@ -169,19 +179,37 @@ static void TMRRenderTileLine(uint8_t count) {
 		tilePtr++;
 		return;
 	}
-
 	uint8_t i = count >> 1;  											// Number of whole bytes to unpack
-	while (i-- > 0) {
-		uint8_t bData = *tilePixels++;
-		*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
-		gDraw++;
-		*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
-		gDraw++;
+	if (tileSize == 16) {  												// 16x16 tiles. Done this long winded way to help optimisation
+		while (i-- > 0) {
+			uint8_t bData = *tilePixels++;
+			*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
+			gDraw++;
+			*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
+			gDraw++;		
+		}
+	} else {  															// 32x32 scaled tiles
+		i = i >> 1;
+		while (i-- > 0) {
+			uint8_t bData = *tilePixels++;
+			*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
+			gDraw++;
+			*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
+			gDraw++;
+			*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
+			gDraw++;
+			*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
+			gDraw++;
+		}
 	}
-	if (count & 1) {  													// Unpack one extra as there are two pixels/byte
+	if (count & 1) {  													// Unpack one.twi extra as there are two pixels/byte
 		uint8_t bData = *tilePixels++;
 		*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
 		gDraw++;		
+		if (tileSize == 32) {
+			*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
+			gDraw++;					
+		}
 	}
 	tilePtr++;
 }
@@ -193,7 +221,9 @@ static void TMRRenderTileLine(uint8_t count) {
 // ***************************************************************************************
 
 static void TMRenderTileLineStart(uint8_t count) {
-	tilePixels = TMPGetTileRowAddress(*tilePtr,yTile & 15);  			// Tile Pixel data comes from here.
+	uint8_t yOffset = (tileSize == 32) ? yTile >> 1 : yTile;  			// Offset in tile.
+	tilePixels = TMPGetTileRowAddress(*tilePtr,yOffset & 15);  			// Tile Pixel data comes from here.
+
 	if (tilePixels == NULL) {  											// Transparent/solid tile.
 		if (*tilePtr > 0xF0) {  										// F1..FF are solid tiles in that colour.
 			while (count--) {
@@ -206,19 +236,32 @@ static void TMRenderTileLineStart(uint8_t count) {
 		tilePtr++;
 		return;
 	}
+	if (tileSize == 32) count >>= 1;
 	uint8_t i = count >> 1;  											// Number of whole pixels
 	tilePixels += (16-count) >> 1;  									// Position in tile line
 	if (count & 1) {  													// Is there the odd half-byte ?
 		uint8_t bData = *tilePixels++;
 		*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
 		gDraw++;
+		if (tileSize == 32) {  											// Handle for scaled tiles.
+			*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
+			gDraw++;			
+		}
 	}
 	while (i-- > 0) {  													// Do all the remaining bytes
 		uint8_t bData = *tilePixels++;
 		*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
 		gDraw++;
+		if (tileSize == 32) {
+			*gDraw = ((*gDraw) & 0xF0) | (bData >> 4);
+			gDraw++;
+		}
 		*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
 		gDraw++;
+		if (tileSize == 32) {
+			*gDraw = ((*gDraw) & 0xF0) | (bData & 0x0F);
+			gDraw++;	
+		}
 	}
 	tilePtr++;  														// Next entry in tile map
 }
@@ -227,5 +270,6 @@ static void TMRenderTileLineStart(uint8_t count) {
 //		Date 		Revision
 //		==== 		========
 //		28-01-24 	Amended to allow tilemaps to overlap windows.
+//		07-02-24 	Started conversion to allow 32x32 tiles (scaled)
 //
 // ***************************************************************************************

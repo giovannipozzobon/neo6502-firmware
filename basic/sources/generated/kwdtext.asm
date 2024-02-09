@@ -126,6 +126,7 @@ BaseTokenText:
 	.byte	$01,$dd                       	; $ e4 ]
 	.byte	$01,$c0                       	; $ e5 @
 	.byte	$08,$54,$49,$4c,$45,$44,$52,$41,$d7	; $ e6 TILEDRAW
+	.byte	$03,$52,$45,$c6               	; $ e7 REF
 	.byte	$FF
 
 Shift1TokenText:
@@ -172,6 +173,10 @@ Shift1TokenText:
 	.byte	$04,$48,$4f,$4d,$c5           	; $1a8 HOME
 	.byte	$06,$4c,$4f,$43,$41,$4c,$c5   	; $1a9 LOCALE
 	.byte	$06,$43,$55,$52,$53,$4f,$d2   	; $1aa CURSOR
+	.byte	$08,$52,$45,$4e,$55,$4d,$42,$45,$d2	; $1ab RENUMBER
+	.byte	$06,$44,$45,$4c,$45,$54,$c5   	; $1ac DELETE
+	.byte	$06,$45,$44,$49,$54,$4f,$d2   	; $1ad EDITOR
+	.byte	$03,$4d,$4f,$ce               	; $1ae MON
 	.byte	$FF
 
 Shift2TokenText:
@@ -286,6 +291,7 @@ Shift2TokenText:
 	.byte	$08,$53,$50,$52,$49,$54,$45,$59,$a8	; $2ec SPRITEY(
 	.byte	$06,$4e,$4f,$54,$45,$53,$a8   	; $2ed NOTES(
 	.byte	$05,$48,$49,$4d,$45,$cd       	; $2ee HIMEM
+	.byte	$08,$56,$42,$4c,$41,$4e,$4b,$53,$a8	; $2ef VBLANKS(
 	.byte	$FF
 
 BinaryPrecedence:
